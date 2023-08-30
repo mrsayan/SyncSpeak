@@ -1,0 +1,24 @@
+.card {
+    width: 600px;
+    max-width: 100%;
+    min-height: 400px;
+    background: #1d1d1d;
+    padding: 30px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+}
+.headingWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+.heading {
+    font-size: 25px;
+    font-weight: bold;
+    margin-left: 20px;
+}

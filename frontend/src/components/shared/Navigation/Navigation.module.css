@@ -1,0 +1,46 @@
+.navbar {
+    padding: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 0 auto;
+}
+
+.logoutButton {
+    background: #0077ff;
+    margin-top: 5px;
+    padding: 2px 12px 5px;
+    border: none;
+    outline: none;
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.logoutButton:hover {
+    background: #014a9c;
+}
+.arrow {
+    width: 25px;
+    margin-left: 8px;
+}
+
+
+.navRight {
+    display: flex;
+    align-items: center;
+}
+
+.avatar {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #0077ff;
+    margin: 0 20px;
+    margin-right: 25px;
+}
