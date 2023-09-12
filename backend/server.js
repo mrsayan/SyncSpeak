@@ -38,14 +38,6 @@ DbConnect();
 app.use(express.json({ limit: '8mb' }));
 app.use(router);
 
-/**
- * Route for the root endpoint.
- * @name GET /
- * @function
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
- * @returns {string} - Returns a string message.
- */
 app.get('/', (req, res) => {
     res.send('Hello from express Js');
 });
@@ -186,10 +178,4 @@ io.on('connection', (socket) => {
     socket.on('disconnecting', leaveRoom);
 });
 
-/**
- * Starts the server listening on the specified port.
- * @function
- * @param {number} PORT - The port number to listen on.
- * @returns {string} - Returns a string message.
- */
 server.listen(PORT, () => console.log(`Listening on port ${PORT}`));

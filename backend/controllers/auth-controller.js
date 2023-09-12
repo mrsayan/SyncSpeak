@@ -1,88 +1,100 @@
-const otpService = require('../services/otp-service');
-const hashService = require('../services/hash-service');
 const userService = require('../services/user-service');
 const tokenService = require('../services/token-service');
 const UserDto = require('../dtos/user-dto');
 
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const cors = require("cors")({origin: true});
+
+const client = require('twilio')(accountSid, authToken, {
+    lazyLoading: true,
+});
+
 class AuthController {
+    // Twilio Verify API v2
+
     async sendOtp(req, res) {
+        res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+
         const { phone } = req.body;
         if (!phone) {
-            res.status(400).json({ message: 'Phone field is required!' });
+            res.status(400).json({ message: 'Phone number is required!' });
         }
 
-        const otp = await otpService.generateOtp();
-        console.log(otp);
-
-        const ttl = 1000 * 60 * 2; // 2 min
-        const expires = Date.now() + ttl;
-        const data = `${phone}.${otp}.${expires}`;
-        const hash = hashService.hashOtp(data);
-
-        // send OTP
         try {
-            // await otpService.sendBySms(phone, otp);
-            res.json({
-                hash: `${hash}.${expires}`,
-                phone,
-            });
+            const verification = await client.verify.v2
+                .services(process.env.TWILIO_VERIFY_SERVICE_SID)
+                .verifications.create({ to: phone, channel: 'sms' });
+            res.json({ message: 'Verification is sent!' });
         } catch (err) {
             console.log(err);
-            res.status(500).json({ message: 'message sending failed' });
+            res.status(500).json({ message: 'Server error' });
         }
     }
 
     async verifyOtp(req, res) {
-        const { otp, hash, phone } = req.body;
-        if (!otp || !hash || !phone) {
-            res.status(400).json({ message: 'All fields are required!' });
+        const { phone, code } = req.body;
+        if (!phone || !code) {
+            res.status(400).json({ message: 'Phone and code are required!' });
         }
+        /*
+        JSON Request Body
+        {
+            "phone": "+380123456789",
+            "code": "123456"
 
-        const [hashedOtp, expires] = hash.split('.');
-        if (Date.now() > +expires) {
-            res.status(400).json({ message: 'OTP expired!' });
-        }
+        */
 
-        const data = `${phone}.${otp}.${expires}`;
-        const isValid = otpService.verifyOtp(hashedOtp, data);
-        if (!isValid) {
-            res.status(400).json({ message: 'Invalid OTP' });
-        }
-
-        let user;
         try {
-            user = await userService.findUser({ phone });
-            if (!user) {
-                user = await userService.createUser({ phone });
+            const verification = await client.verify.v2
+                .services(process.env.TWILIO_VERIFY_SERVICE_SID)
+                .verificationChecks.create({ to: phone, code });
+            if (verification.status === 'approved') {
+                let user;
+                try {
+                    user = await userService.findUser({ phone });
+                    if (!user) {
+                        user = await userService.createUser({ phone });
+                    }
+                } catch (err) {
+                    console.log(err);
+                    res.status(500).json({ message: 'Db error' });
+                }
+
+                const { accessToken, refreshToken } = tokenService.generateTokens({
+                    _id: user._id,
+                    activated: false,
+                });
+
+                await tokenService.storeRefreshToken(refreshToken, user._id);
+
+                res.cookie('refreshToken', refreshToken, {
+                    maxAge: 1000 * 60 * 60 * 24 * 30,
+                    httpOnly: true,
+                });
+
+                res.cookie('accessToken', accessToken, {
+                    maxAge: 1000 * 60 * 60 * 24 * 30,
+                    httpOnly: true,
+                });
+
+                const userDto = new UserDto(user);
+                res.json({ user: userDto, auth: true });
             }
-        } catch (err) {
-            console.log(err);
-            res.status(500).json({ message: 'Db error' });
+            else
+            {
+                res.status(400).json({ message: 'Invalid code' });
+            }
         }
-
-        const { accessToken, refreshToken } = tokenService.generateTokens({
-            _id: user._id,
-            activated: false,
-        });
-
-        await tokenService.storeRefreshToken(refreshToken, user._id);
-
-        res.cookie('refreshToken', refreshToken, {
-            maxAge: 1000 * 60 * 60 * 24 * 30,
-            httpOnly: true,
-        });
-
-        res.cookie('accessToken', accessToken, {
-            maxAge: 1000 * 60 * 60 * 24 * 30,
-            httpOnly: true,
-        });
-
-        const userDto = new UserDto(user);
-        res.json({ user: userDto, auth: true });
+        catch (err) {
+            console.log(err);
+            res.status(500).json({ message: 'Server error' });
+        }
     }
 
     async refresh(req, res) {
         // get refresh token from cookie
+        res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
         const { refreshToken: refreshTokenFromCookie } = req.cookies;
         // check if token is valid
         let userData;

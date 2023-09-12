@@ -39,7 +39,9 @@ class ActivateController {
             user.activated = true;
             user.name = name;
             user.avatar = `/storage/${imagePath}`;
-            user.save();
+            // user.save();
+            await user.save(); // Use await to save the user
+            // res.header('Access-Control-Allow-Origin', 'http://localhost:5500/api/activate'); 
             res.json({ user: new UserDto(user), auth: true });
         } catch (err) {
             res.status(500).json({ message: 'Something went wrong!' });

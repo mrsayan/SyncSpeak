@@ -9,18 +9,21 @@ import { setAuth } from '../../../store/authSlice';
 import { useDispatch } from 'react-redux';
 
 const StepOtp = () => {
-    const [otp, setOtp] = useState('');
+    const [code, setOtp] = useState('');
     const dispatch = useDispatch();
-    const { phone, hash } = useSelector((state) => state.auth.otp);
+    const phone = useSelector((state) => state.auth.phone);
     async function submit() {
-        if (!otp || !phone || !hash) return;
+        if (!code) return;
         try {
-            const { data } = await verifyOtp({ otp, phone, hash });
-            dispatch(setAuth(data));
+            // {"phone":"+917278477569","code":"985778"}
+            const { data } = await verifyOtp({ phone, code });
+            console.log(data);
+            dispatch(setAuth({ isAuth: true, user: data.user }));
         } catch (err) {
             console.log(err);
         }
     }
+
     return (
         <>
             <div className={styles.cardWrapper}>
@@ -29,7 +32,7 @@ const StepOtp = () => {
                     icon="lock-emoji"
                 >
                     <TextInput
-                        value={otp}
+                        value={code}
                         onChange={(e) => setOtp(e.target.value)}
                     />
                     <div className={styles.actionButtonWrap}>
