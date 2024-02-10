@@ -14,7 +14,7 @@ class AuthController {
     // Twilio Verify API v2
 
     async sendOtp(req, res) {
-        res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+        res.header('Access-Control-Allow-Origin', process.env.FRONT_URL);
 
         const { phone } = req.body;
         if (!phone) {
@@ -94,7 +94,7 @@ class AuthController {
 
     async refresh(req, res) {
         // get refresh token from cookie
-        res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+        res.header('Access-Control-Allow-Origin', process.env.FRONT_URL);
         const { refreshToken: refreshTokenFromCookie } = req.cookies;
         // check if token is valid
         let userData;
