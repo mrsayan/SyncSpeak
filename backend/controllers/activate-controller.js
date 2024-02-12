@@ -11,6 +11,26 @@ class ActivateController {
             res.status(400).json({ message: 'All fields are required!' });
         }
 
+        if (avatar === 'defaultAvatar') {
+            const userId = req.user._id;
+
+            try {
+                const user = await userService.findUser({ _id: userId });
+                if (!user) {
+                    return res.status(404).json({ message: 'User not found!' });
+                }
+                user.activated = true;
+                user.name = name;
+                user.avatar = '/storage/defaultAvatar.png';
+                user.save();
+                res.json({ user: new UserDto(user), auth: true });
+            } catch (err) {
+                return res.status(500).json({ message: 'Something went wrong!' });
+            }
+
+            return;
+        }
+
         // Image Base64
         const buffer = Buffer.from(
             avatar.replace(/^data:image\/(png|jpg|jpeg);base64,/, ''),

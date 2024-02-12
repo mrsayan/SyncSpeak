@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
     name: '',
-    avatar: '',
+    avatar: 'defaultAvatar',
 };
 
 export const activateSlice = createSlice({
